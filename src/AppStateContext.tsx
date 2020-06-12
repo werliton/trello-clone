@@ -32,6 +32,16 @@ interface AppStateContextProps {
     state: AppState
 }
 
+type Action =
+    | {
+        type: 'ADD_LIST'
+        payload: string
+    }
+    | {
+        type: 'ADD_TASK'
+        payload: { text: string; taskId: string }
+    }
+
 export interface AppState {
     lists: List[]
 }
