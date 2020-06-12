@@ -1,4 +1,4 @@
-import React, { createContext } from "react"
+import React, { createContext, useContext } from "react"
 
 const appData: AppState = {
     lists: [
@@ -43,3 +43,5 @@ export const AppStateProvider = ({ children }: React.PropsWithChildren<{}>) => (
         {children}
     </AppStateContext.Provider>
 )
+
+export const useAppState = () => useContext(AppStateContext)
