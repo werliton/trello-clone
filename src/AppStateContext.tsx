@@ -1,4 +1,7 @@
-import React, { createContext, useContext } from "react"
+import React, { createContext, useContext, useReducer } from "react"
+import uuid from 'uuid'
+import { findItemIndexById } from "./utils/findItemIndexById"
+import { moveItem } from "./moveItem"
 
 const appData: AppState = {
     lists: [
@@ -30,6 +33,7 @@ interface List {
 }
 interface AppStateContextProps {
     state: AppState
+    dispatch: Function
 }
 
 type Action =
@@ -41,6 +45,13 @@ type Action =
         type: 'ADD_TASK'
         payload: { text: string; taskId: string }
     }
+    | {
+        type: 'MOVE_LIST'
+        payload: {
+            dragIndex: number
+            hoverIndex: number
+        }
+    }
 
 export interface AppState {
     lists: List[]
@@ -48,10 +59,48 @@ export interface AppState {
 
 const AppStateContext = createContext<AppStateContextProps>({} as AppStateContextProps)
 
-export const AppStateProvider = ({ children }: React.PropsWithChildren<{}>) => (
-    <AppStateContext.Provider value={{ state: appData }}>
-        {children}
-    </AppStateContext.Provider>
-)
+const appStateReducer = (state: AppState, action: Action): AppState => {
+    switch (action.type) {
+        case "ADD_LIST": {
+            return {
+                ...state,
+                lists:[
+                    ...state.lists,
+                    { id: 'uuid()', text:action.payload, tasks:[] }
+                ]
+            }
+        }
+        case "ADD_TASK": {
+            const targetLaneIndex = findItemIndexById(
+                state.lists,
+                action.payload.taskId
+            )
+            state.lists[targetLaneIndex].tasks.push({
+                id: 'uuid()',
+                text: action.payload.text
+            })
+            return {
+                ...state
+            }
+        }
 
+        case "MOVE_LIST":{
+            const { dragIndex, hoverIndex } = action.payload
+            state.lists = moveItem(state.lists, dragIndex, hoverIndex)
+            return { ...state }
+        }
+        default: {
+            return state
+        }
+    }
+}
+
+export const AppStateProvider = ({ children }: React.PropsWithChildren<{}>) => {
+    const [state, dispatch] = useReducer(appStateReducer, appData)
+    return (
+        <AppStateContext.Provider value={{ state, dispatch }}>
+            {children}
+        </AppStateContext.Provider>
+    )
+}
 export const useAppState = () => useContext(AppStateContext)
